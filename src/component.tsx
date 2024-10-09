@@ -3,9 +3,9 @@ import remarkGFM from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
-import remarkToc from 'remark-toc'
-import rehypeRaw from 'rehype-raw'
-import { cn } from './utils'
+import { toc } from 'mdast-util-toc'
+import { toMarkdown } from 'mdast-util-to-markdown'
+import { fromMarkdown } from 'mdast-util-from-markdown'
 
 type LayoutProps = React.PropsWithChildren<{ css: string }>
 export function Layout({ children, css }: LayoutProps) {
@@ -33,89 +33,46 @@ type MarkdownRendererProps = {
   title: string
   description?: string
   content: string
-  className?: string
 }
 
-export function MarkdownRenderer({ title, description, content, className }: MarkdownRendererProps) {
+export function MarkdownRenderer({ title, description, content }: MarkdownRendererProps) {
+  const tocMarkdown = generateTOC(content)
   return (
-    <Markdown
-      remarkPlugins={[
-        remarkGFM,
-        [remarkToc, { tight: true, maxDepth: 6, ordered: true, skip: 'CoverPage|TocPageBreak' }],
-      ]}
-      rehypePlugins={[rehypeHighlight, rehypeSlug, rehypeAutolinkHeadings, rehypeRaw]}
-      remarkRehypeOptions={{
-        allowDangerousHtml: true,
-      }}
-      className={cn('prose w-full max-w-none', className)}
-      components={{
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        h1: ({ children, node, ...rest }) => {
-          const elements = [
-            <h1 className="text-3xl font-semibold" {...rest} key="content">
-              {children}
-            </h1>,
-          ]
-          return <>{elements}</>
-        },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        h2: ({ children, node, ...rest }) => (
-          <h2 className="text-2xl font-semibold" {...rest}>
-            {children}
-          </h2>
-        ),
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        h3: ({ children, node, ...rest }) => (
-          <h3 className="text-xl font-semibold" {...rest}>
-            {children}
-          </h3>
-        ),
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        h4: ({ children, node, ...rest }) => (
-          <h4 className="text-lg font-semibold" {...rest}>
-            {children}
-          </h4>
-        ),
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        h6: ({ children, node, ...rest }) => {
-          if (rest.id === 'table-of-contents') {
-            return (
-              <h1 className="text-3xl font-semibold" {...rest}>
-                {children}
-              </h1>
-            )
-          }
-          if (rest.id === 'tocpagebreak') {
-            return <div style={{ pageBreakAfter: 'always' }}></div>
-          }
-          if (rest.id === 'coverpage') {
-            return (
-              <div
-                className="flex h-screen flex-col items-center justify-center gap-4"
-                style={{ pageBreakAfter: 'always' }}
-              >
-                <div className="text-3xl font-medium">{title}</div>
-                <div className="text-base text-slate-600">{description}</div>
-              </div>
-            )
-          }
-          return <h6 {...rest}>{children}</h6>
-        },
-      }}
-    >
-      {/*
-      This is a very weird hack to add a page break after the TOC
-      The table of contents heading is required to render the contents
-      The tocpagebreak is required to add a page break after the TOC
-      The coverpage is required to render the cover page
-       */}
-      {`
-###### CoverPage
-###### Table of Contents
-###### TocPageBreak
+    <>
+      <div
+        className="flex h-screen flex-col items-center justify-center gap-4 border-2"
+        style={{ pageBreakAfter: 'always' }}
+      >
+        <div className="text-3xl font-medium">{title}</div>
+        <div className="text-base text-slate-600">{description}</div>
+      </div>
+      <div className="prose w-full max-w-none prose-h1:text-3xl prose-h1:font-medium prose-h2:font-medium prose-h3:font-medium prose-h4:font-medium prose-h5:font-medium prose-h6:font-medium">
+        {tocMarkdown ? (
+          <>
+            <Markdown className="">
+              {`
+# Table of Content
 
-${content}
-      `}
-    </Markdown>
+${tocMarkdown}
+        `}
+            </Markdown>
+            <div style={{ pageBreakAfter: 'always' }} />
+          </>
+        ) : null}
+        <Markdown remarkPlugins={[remarkGFM]} rehypePlugins={[rehypeHighlight, rehypeSlug, rehypeAutolinkHeadings]}>
+          {content}
+        </Markdown>
+      </div>
+    </>
   )
+}
+
+function generateTOC(content: string) {
+  const tree = fromMarkdown(content)
+  const result = toc(tree, { tight: true, maxDepth: 6, ordered: true })
+  if (result.map) {
+    const markdown = toMarkdown(result.map)
+    return markdown
+  }
+  return ''
 }

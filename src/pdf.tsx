@@ -38,17 +38,11 @@ export async function generateMarkdownContent({
     format: 'A4',
     displayHeaderFooter: true,
     headerTemplate: `
-    <style>${css}</style>
     <style>
       #header {
         padding: 0px;
       }
     </style>
-    <div class="header w-full text-center text-[14px] px-[32px]">
-      <div class="border-b py-[12px]">
-        ${title}
-      </div>
-    </div>
   `,
     footerTemplate: `
     <style>
@@ -66,8 +60,8 @@ export async function generateMarkdownContent({
     </div>
   `,
     margin: {
-      top: '80px',
-      bottom: '80px',
+      top: '40px',
+      bottom: '40px',
       right: '32px',
       left: '32px',
     },
