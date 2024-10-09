@@ -3,9 +3,9 @@ import remarkGFM from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
-import { cn } from './utils'
 import remarkToc from 'remark-toc'
 import rehypeRaw from 'rehype-raw'
+import { cn } from './utils'
 
 type LayoutProps = React.PropsWithChildren<{ css: string }>
 export function Layout({ children, css }: LayoutProps) {
@@ -31,14 +31,18 @@ export function Layout({ children, css }: LayoutProps) {
 
 type MarkdownRendererProps = {
   title: string
+  description?: string
   content: string
   className?: string
 }
 
-export function MarkdownRenderer({ title, content, className }: MarkdownRendererProps) {
+export function MarkdownRenderer({ title, description, content, className }: MarkdownRendererProps) {
   return (
     <Markdown
-      remarkPlugins={[remarkGFM, [remarkToc, { tight: true, maxDepth: 4, ordered: true }]]}
+      remarkPlugins={[
+        remarkGFM,
+        [remarkToc, { tight: true, maxDepth: 6, ordered: true, skip: 'CoverPage|TocPageBreak' }],
+      ]}
       rehypePlugins={[rehypeHighlight, rehypeSlug, rehypeAutolinkHeadings, rehypeRaw]}
       remarkRehypeOptions={{
         allowDangerousHtml: true,
@@ -86,8 +90,12 @@ export function MarkdownRenderer({ title, content, className }: MarkdownRenderer
           }
           if (rest.id === 'coverpage') {
             return (
-              <div className="flex h-screen items-center justify-center" style={{ pageBreakAfter: 'always' }}>
-                {title}
+              <div
+                className="flex h-screen flex-col items-center justify-center gap-4"
+                style={{ pageBreakAfter: 'always' }}
+              >
+                <div className="text-3xl font-medium">{title}</div>
+                <div className="text-base text-slate-600">{description}</div>
               </div>
             )
           }
@@ -99,8 +107,10 @@ export function MarkdownRenderer({ title, content, className }: MarkdownRenderer
       This is a very weird hack to add a page break after the TOC
       The table of contents heading is required to render the contents
       The tocpagebreak is required to add a page break after the TOC
+      The coverpage is required to render the cover page
        */}
       {`
+###### CoverPage
 ###### Table of Contents
 ###### TocPageBreak
 

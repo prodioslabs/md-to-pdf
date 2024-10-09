@@ -2,11 +2,10 @@ import { renderToString } from 'react-dom/server'
 import puppeteer from 'puppeteer'
 import postcss from 'postcss'
 import tailwindcss from 'tailwindcss'
-import autoprefixer from 'autoprefixer'
 import tailwindConfig from '../tailwind.config'
 import { Layout, MarkdownRenderer } from './component'
 
-const css = postcss([autoprefixer(), tailwindcss(tailwindConfig)]).process(
+const css = postcss([tailwindcss(tailwindConfig)]).process(
   '@tailwind base; @tailwind components; @tailwind utilities;',
   {
     from: undefined,
@@ -14,11 +13,19 @@ const css = postcss([autoprefixer(), tailwindcss(tailwindConfig)]).process(
   },
 )
 
-export async function generateMarkdownContent({ content, title }: { content: string; title: string }) {
+export async function generateMarkdownContent({
+  content,
+  title,
+  description,
+}: {
+  content: string
+  title: string
+  description?: string
+}) {
   const cssContent = await css
   const pageContent = renderToString(
     <Layout css={cssContent.css}>
-      <MarkdownRenderer content={content} title={title} />
+      <MarkdownRenderer content={content} title={title} description={description} />
     </Layout>,
   )
 
@@ -64,32 +71,6 @@ export async function generateMarkdownContent({ content, title }: { content: str
       right: '32px',
       left: '32px',
     },
-  })
-  await browser.close()
-
-  return buffer
-}
-
-export async function generateCoverPage({ title, description }: { title: string; description: string }) {
-  const cssContent = await css
-  const pageContent = renderToString(
-    <Layout css={cssContent.css}>
-      <div className="h-screen p-4">
-        <div className="flex h-full flex-col items-center justify-center gap-2 border-2 border-orange-500">
-          <div className="text-3xl font-medium text-slate-900">{title}</div>
-          <div className="text-lg text-slate-600">{description}</div>
-        </div>
-      </div>
-    </Layout>,
-  )
-
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
-  page.setContent(pageContent)
-  await page.waitForNetworkIdle()
-  const buffer = await page.pdf({
-    printBackground: true,
-    format: 'A4',
   })
   await browser.close()
 

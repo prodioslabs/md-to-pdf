@@ -1,11 +1,9 @@
 import { resolve } from 'node:path'
 import { unlink } from 'node:fs/promises'
 import { Command, Option } from 'commander'
-import { generateCoverPage, generateMarkdownContent } from './pdf'
-import PDFMerger from 'pdf-merger-js'
+import { generateMarkdownContent } from './pdf'
 
 const program = new Command()
-const merger = new PDFMerger()
 
 program
   .name('md-to-pdf')
@@ -31,14 +29,14 @@ program
       await unlink(outputFilePath)
     }
 
-    const coverPageBuffer = await generateCoverPage({ title: options.title, description: options.description })
-    await merger.add(coverPageBuffer)
-
-    const markdownBuffer = await generateMarkdownContent({ content, title: options.title })
-    await merger.add(markdownBuffer)
+    const markdownBuffer = await generateMarkdownContent({
+      content,
+      title: options.title,
+      description: options.description,
+    })
 
     const writer = outputFile.writer()
-    writer.write(await merger.saveAsBuffer())
+    writer.write(markdownBuffer)
     writer.flush()
     console.log(`PDF generated at ${outputFilePath}`)
   })
