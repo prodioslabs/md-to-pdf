@@ -1,6 +1,6 @@
 {
 	"name": "@prodioslabs/md-to-pdf",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"type": "module",
 	"bin": "./src/index.ts",
 	"private": false,

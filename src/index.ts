@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import { resolve } from 'node:path'
 import { unlink } from 'node:fs/promises'
 import { Command, Option } from 'commander'
